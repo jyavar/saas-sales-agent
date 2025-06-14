@@ -1,6 +1,6 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import jwtDecode from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 import { JWT } from "next-auth/jwt";
 import { cookies } from "next/headers";
 
@@ -44,24 +44,24 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       // On sign in, decode JWT and attach info
-      if (user && user.token) {
-        const decoded = jwtDecode<DecodedToken>(user.token);
+      if (user && (user as any).token) {
+        const decoded = jwtDecode<DecodedToken>((user as any).token);
         token.id = decoded.userId;
         token.tenantId = decoded.tenantId;
         token.role = decoded.role;
         token.email = decoded.email;
-        token.accessToken = user.token;
+        token.accessToken = (user as any).token;
       }
       return token;
     },
     async session({ session, token }) {
-      session.user = {
-        id: token.id,
-        email: token.email,
-        role: token.role,
-        tenantId: token.tenantId,
+      (session.user as any) = {
+        id: token.id as string | undefined,
+        email: token.email as string | undefined,
+        role: token.role as string | undefined,
+        tenantId: token.tenantId as string | undefined,
       };
-      session.accessToken = token.accessToken;
+      (session as any).accessToken = token.accessToken as string | undefined;
       return session;
     },
   },

@@ -18,6 +18,9 @@ import { toast } from "sonner"
 import { z } from "zod"
 import { useOrchestrator, OrchestratorEvent } from "@/hooks/useOrchestrator"
 import { AgentActivityFeed, AgentActivity } from "@/components/agent/AgentActivityFeed"
+import { useSession } from "next-auth/react"
+import { Button } from "@/components/ui/button"
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
 
 const campaigns = [
   {
@@ -89,6 +92,7 @@ export default function CampaignsPage() {
   const [agentResult, setAgentResult] = useState<any>(null)
   const { sendOrchestration } = useOrchestrator()
   const [activities, setActivities] = useState<AgentActivity[]>([])
+  const { data: session, status } = useSession()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -121,15 +125,18 @@ export default function CampaignsPage() {
   }
 
   useEffect(() => {
-    const userId = "user_123" // Reemplazar por el user real del contexto/auth
-    sendOrchestration({ userId, eventType: "CAMPAIGN_VIEWED", metadata: { page: "campaigns" } })
-      .catch(() => {})
-    // Carga actividades del agente
+    if (status !== "authenticated") return;
+    sendOrchestration("CAMPAIGN_VIEWED", { page: "campaigns" })
+      .catch(() => {});
     fetch("/api/agent/activities")
       .then(res => res.json())
       .then(data => setActivities(data.activities || []))
-      .catch(() => setActivities([]))
-  }, [])
+      .catch(() => setActivities([]));
+  }, [status]);
+
+  if (status !== "authenticated") {
+    return <div className="p-4 text-center">Checking authentication...</div>;
+  }
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }} className="space-y-6">

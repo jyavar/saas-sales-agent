@@ -1,7 +1,11 @@
+"use client"
 import dynamic from "next/dynamic"
 import { Suspense } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useTenant } from "@/lib/contexts/TenantContext"
+import { useSession } from "next-auth/react"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 
 // Lazy load componentes pesados del dashboard
 const CampaignStats = dynamic(() => import("@/components/dashboard/CampaignStats"), {
@@ -21,6 +25,18 @@ const PerformanceChart = dynamic(() => import("@/components/dashboard/Performanc
 
 export default function DashboardPage() {
   const { tenant, loading, error } = useTenant();
+  const { status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.replace("/login");
+    }
+  }, [status, router]);
+
+  if (status !== "authenticated") {
+    return <div className="p-4 text-center">Checking authentication...</div>;
+  }
 
   return (
     <div className="space-y-8 pb-10">
