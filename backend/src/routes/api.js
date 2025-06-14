@@ -264,4 +264,4 @@ router.post('/webhooks/stripe', tenantController.handleStripeWebhook);
 router.post('/webhooks/resend', tenantController.handleResendWebhook);
 router.post('/webhooks/github', tenantController.handleGithubWebhook);
 
-export default router;
+export const apiRouter = router;

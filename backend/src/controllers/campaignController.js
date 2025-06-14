@@ -1,4 +1,4 @@
-import { createCampaign as persistCampaign } from '../core/db/campaignDataAccess.ts';
+import { createCampaign as persistCampaign } from '../core/db/campaignDataAccess.js';
 import { logger } from '../utils/common/logger.js';
 // Importa el agente como módulo Node.js (ajusta el path si es necesario)
 import { runAgentForCampaign } from '../../../agent/core/agentRunner';

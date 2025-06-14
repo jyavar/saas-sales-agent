@@ -18,9 +18,10 @@ import { tenantMiddleware } from './middleware/tenant.js';
 import { rateLimitMiddleware } from './middleware/rateLimiter.js';
 
 // Import routes
-import apiRoutes from './routes/api.js';
-import healthRoutes from './routes/health.js';
-import docsRoutes from './routes/docs.js';
+import { apiRouter } from './routes/api.js';
+import { healthRouter } from './routes/health.js';
+import { docsRouter } from './routes/docs.js';
+import agentRoutes from './routes/agentRoutes.js';
 
 // Load environment variables
 config();
@@ -132,7 +133,7 @@ app.use(rateLimitMiddleware);
 // ============================================================================
 
 // Health routes (no tenant required)
-app.use('/health', healthRoutes);
+app.use('/health', healthRouter);
 
 // ============================================================================
 // TENANT MIDDLEWARE (Applied to all API routes)
@@ -146,10 +147,13 @@ app.use('/api', tenantMiddleware);
 // ============================================================================
 
 // API routes with tenant context
-app.use('/api', apiRoutes);
+app.use('/api', apiRouter);
 
 // Documentation routes
-app.use('/api/docs', docsRoutes);
+app.use('/api/docs', docsRouter);
+
+// Agent routes
+app.use('/api/agent', agentRoutes);
 
 // ============================================================================
 // ROOT ENDPOINT

@@ -594,4 +594,3 @@ export class AgentActionController {
 }
 
 export const agentActionController = new AgentActionController();
-export default agentActionController;

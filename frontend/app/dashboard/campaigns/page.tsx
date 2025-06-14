@@ -1,7 +1,5 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,9 +13,11 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ArrowUpDown, MoreHorizontal, Plus, Search } from "lucide-react"
 import { motion } from "framer-motion"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { z } from "zod"
+import { useOrchestrator, OrchestratorEvent } from "@/hooks/useOrchestrator"
+import { AgentActivityFeed, AgentActivity } from "@/components/agent/AgentActivityFeed"
 
 const campaigns = [
   {
@@ -87,6 +87,8 @@ export default function CampaignsPage() {
   const [form, setForm] = useState({ name: "", repoUrl: "", tenantId: "" })
   const [loading, setLoading] = useState(false)
   const [agentResult, setAgentResult] = useState<any>(null)
+  const { sendOrchestration } = useOrchestrator()
+  const [activities, setActivities] = useState<AgentActivity[]>([])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -117,6 +119,17 @@ export default function CampaignsPage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    const userId = "user_123" // Reemplazar por el user real del contexto/auth
+    sendOrchestration({ userId, eventType: "CAMPAIGN_VIEWED", metadata: { page: "campaigns" } })
+      .catch(() => {})
+    // Carga actividades del agente
+    fetch("/api/agent/activities")
+      .then(res => res.json())
+      .then(data => setActivities(data.activities || []))
+      .catch(() => setActivities([]))
+  }, [])
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }} className="space-y-6">
@@ -294,6 +307,11 @@ export default function CampaignsPage() {
           <pre className="text-xs whitespace-pre-wrap">{JSON.stringify(agentResult, null, 2)}</pre>
         </div>
       )}
+
+      <div className="mt-8">
+        <h4 className="font-bold mb-2">Agent Activity Feed</h4>
+        <AgentActivityFeed activities={activities} />
+      </div>
     </motion.div>
   )
 }
