@@ -1,0 +1,142 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    # Warm-up phase
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm-up"
+    # Load testing phase
+    - duration: 300
+      arrivalRate: 20
+      name: "Load test"
+    # Stress testing phase
+    - duration: 120
+      arrivalRate: 50
+      name: "Stress test"
+    # Spike testing phase
+    - duration: 60
+      arrivalRate: 100
+      name: "Spike test"
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+      User-Agent: 'Artillery Load Test'
+
+scenarios:
+  # Authentication flow testing
+  - name: "Authentication Flow"
+    weight: 30
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "test@example.com"
+            password: "password123"
+          capture:
+            - json: "$.session.access_token"
+              as: "authToken"
+      - get:
+          url: "/api/auth/profile"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+  # Campaign management testing
+  - name: "Campaign Operations"
+    weight: 25
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "test@example.com"
+            password: "password123"
+          capture:
+            - json: "$.session.access_token"
+              as: "authToken"
+      - get:
+          url: "/api/campaigns"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+            X-Tenant-ID: "tenant-123"
+      - post:
+          url: "/api/campaigns"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+            X-Tenant-ID: "tenant-123"
+          json:
+            name: "Load Test Campaign {{ $randomString() }}"
+            subject: "Test Subject"
+            body: "Test email body"
+            leadIds: ["123e4567-e89b-12d3-a456-426614174000"]
+
+  # Repository analysis testing
+  - name: "Repository Analysis"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "test@example.com"
+            password: "password123"
+          capture:
+            - json: "$.session.access_token"
+              as: "authToken"
+      - post:
+          url: "/api/repositories/analyze"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+            X-Tenant-ID: "tenant-123"
+          json:
+            url: "https://github.com/facebook/react"
+            branch: "main"
+
+  # Health checks and monitoring
+  - name: "Health Checks"
+    weight: 15
+    flow:
+      - get:
+          url: "/health"
+      - get:
+          url: "/api/health"
+
+  # Optimization endpoints (admin)
+  - name: "System Monitoring"
+    weight: 10
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "admin@example.com"
+            password: "adminpassword123"
+          capture:
+            - json: "$.session.access_token"
+              as: "adminToken"
+      - get:
+          url: "/api/optimization/performance"
+          headers:
+            Authorization: "Bearer {{ adminToken }}"
+      - get:
+          url: "/api/optimization/circuit-breakers"
+          headers:
+            Authorization: "Bearer {{ adminToken }}"
+      - get:
+          url: "/api/optimization/cache"
+          headers:
+            Authorization: "Bearer {{ adminToken }}"
+
+# Performance thresholds
+expect:
+  - statusCode: 200
+  - contentType: json
+  - hasProperty: success
+  - maxResponseTime: 2000  # 2 seconds max response time
+
+# Metrics to track
+metrics:
+  - name: "response_time_p95"
+    unit: "ms"
+  - name: "response_time_p99"
+    unit: "ms"
+  - name: "error_rate"
+    unit: "percent"
+  - name: "requests_per_second"
+    unit: "rps"

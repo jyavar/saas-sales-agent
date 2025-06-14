@@ -1,0 +1,31 @@
+{
+  "cta": {
+    "startNow": "Start using Strato for free",
+    "viewPricing": "See Pricing",
+    "connectGithub": "Connect GitHub",
+    "seeDemo": "See It In Action",
+    "getStarted": "Get Started",
+    "learnMore": "Learn More",
+    "contactSales": "Contact Sales",
+    "startFree": "Start Free Trial"
+  },
+  "hero": {
+    "title": "AI Sales Agent for Solo SaaS Founders",
+    "subtitle": "Automated Sales Agent for Post-MVP SaaS Founders",
+    "description": "Deploy an AI sales team that works 24/7 with zero CAC. Connect your GitHub repo and start generating qualified leads in minutes, not months."
+  },
+  "features": {
+    "zeroCac": "Zero customer acquisition cost",
+    "noSalesTeam": "No sales team required",
+    "quickDeploy": "Deploy in 5 minutes"
+  },
+  "nav": {
+    "features": "Features",
+    "pricing": "Pricing",
+    "about": "About",
+    "contact": "Contact",
+    "login": "Log in",
+    "signup": "Sign up",
+    "dashboard": "Dashboard"
+  }
+}

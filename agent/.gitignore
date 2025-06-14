@@ -1,0 +1,19 @@
+# node_modules y lockfiles
+node_modules/
+pnpm-lock.yaml
+
+# Archivos de entorno
+.env
+.env.local
+
+# Configs y sistema
+.vscode/
+.DS_Store
+
+# Logs y resultados
+logs/
+*.log
+
+# Directorios de build/test
+coverage/
+.vite/

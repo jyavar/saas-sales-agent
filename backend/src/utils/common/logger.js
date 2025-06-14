@@ -1,0 +1,147 @@
+/**
+ * Structured logging utility
+ */
+
+const LOG_LEVELS = {
+  error: 0,
+  warn: 1,
+  info: 2,
+  debug: 3
+};
+
+const currentLogLevel = LOG_LEVELS[process.env.LOG_LEVEL] || LOG_LEVELS.info;
+
+/**
+ * Format log message for different environments
+ */
+function formatLogMessage(level, message, data = {}) {
+  const timestamp = new Date().toISOString();
+  
+  if (process.env.NODE_ENV === 'production') {
+    // JSON format for production
+    return JSON.stringify({
+      timestamp,
+      level: level.toUpperCase(),
+      message,
+      ...data
+    });
+  } else {
+    // Human-readable format for development
+    const dataStr = Object.keys(data).length > 0 ? ` ${JSON.stringify(data, null, 2)}` : '';
+    return `[${timestamp}] ${level.toUpperCase()}: ${message}${dataStr}`;
+  }
+}
+
+/**
+ * Log function
+ */
+function log(level, message, data = {}) {
+  if (LOG_LEVELS[level] > currentLogLevel) {
+    return; // Skip if log level is too high
+  }
+  
+  const formattedMessage = formatLogMessage(level, message, data);
+  
+  if (level === 'error') {
+    console.error(formattedMessage);
+  } else if (level === 'warn') {
+    console.warn(formattedMessage);
+  } else {
+    console.log(formattedMessage);
+  }
+}
+
+/**
+ * Logger object with different levels
+ */
+export const logger = {
+  error: (message, data) => log('error', message, data),
+  warn: (message, data) => log('warn', message, data),
+  info: (message, data) => log('info', message, data),
+  debug: (message, data) => log('debug', message, data)
+};
+
+/**
+ * Request logging middleware
+ */
+export const logRequest = (req, res, next) => {
+  const start = Date.now();
+  
+  // Log incoming request
+  logger.info('Incoming request', {
+    requestId: req.id,
+    method: req.method,
+    path: req.path,
+    query: req.query,
+    userAgent: req.headers['user-agent'],
+    ip: req.ip || req.connection.remoteAddress,
+    tenantId: req.headers['x-tenant-id'],
+    agentId: req.headers['x-agent-id']
+  });
+  
+  // Override res.end to log response
+  const originalEnd = res.end;
+  res.end = function(chunk, encoding) {
+    const duration = Date.now() - start;
+    
+    // Log response
+    logger.info('Request completed', {
+      requestId: req.id,
+      method: req.method,
+      path: req.path,
+      statusCode: res.statusCode,
+      duration: `${duration}ms`,
+      contentLength: res.getHeader('content-length'),
+      tenantId: req.tenantId,
+      userId: req.user?.id,
+      agentId: req.agent?.id
+    });
+    
+    // Call original end
+    originalEnd.call(this, chunk, encoding);
+  };
+  
+  next();
+};
+
+/**
+ * Error logging helper
+ */
+export const logError = (error, context = {}) => {
+  logger.error('Error occurred', {
+    error: {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    },
+    ...context
+  });
+};
+
+/**
+ * Performance logging helper
+ */
+export const logPerformance = (operation, duration, context = {}) => {
+  const level = duration > 1000 ? 'warn' : 'debug';
+  
+  logger[level]('Performance metric', {
+    operation,
+    duration: `${duration}ms`,
+    slow: duration > 1000,
+    ...context
+  });
+};
+
+/**
+ * Security event logging
+ */
+export const logSecurityEvent = (event, details = {}) => {
+  logger.warn('Security event', {
+    event,
+    timestamp: new Date().toISOString(),
+    ...details
+  });
+};
+
+export default logger;
