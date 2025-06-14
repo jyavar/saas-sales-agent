@@ -6,7 +6,7 @@ import { logger } from '../utils/common/logger.js';
 import { validateData, validateQueryParams } from '../utils/validation.js';
 import { leadSchemas, paginationSchema } from '../utils/validation.js';
 import { ValidationError, NotFoundError } from '../utils/common/errorHandler.js';
-import { listLeads as dalListLeads, createLead as dalCreateLead, getLeadById as dalGetLeadById, updateLead as dalUpdateLead, deleteLead as dalDeleteLead } from '../core/db/leadDataAccess';
+import { listLeads as dalListLeads, createLead as dalCreateLead, getLeadById as dalGetLeadById, updateLead as dalUpdateLead, deleteLead as dalDeleteLead } from '../core/db/leadDataAccess.ts';
 
 export class LeadController {
   /**
