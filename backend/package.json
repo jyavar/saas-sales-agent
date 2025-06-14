@@ -1,5 +1,5 @@
 {
-  "name": "stratoai-backend",
+  "name": "backend",
   "version": "1.0.0",
   "description": "Modular white-label SaaS backend for StratoAI",
   "private": true,

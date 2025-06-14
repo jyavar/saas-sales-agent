@@ -335,5 +335,4 @@ export class LeadController {
   }
 }
 
-export const leadController = new LeadController();
-export default leadController;
+export default new LeadController();
