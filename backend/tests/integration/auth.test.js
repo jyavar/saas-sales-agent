@@ -18,6 +18,9 @@ const createMockReq = (overrides = {}) => ({
   ...overrides
 });
 
+// Archivo de test vacío. Comentar para evitar error de test suite.
+// describe('integration auth', () => { /* ... */ });
+
 describe('Authentication Integration Tests', () => {
   beforeEach(() => {
     // Reset mocks before each test

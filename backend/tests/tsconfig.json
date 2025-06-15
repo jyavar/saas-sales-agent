@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "module": "ESNext",
+    "target": "ESNext",
+    "moduleResolution": "Node",
+    "esModuleInterop": true,
+    "types": ["node", "vitest"]
+  },
+  "include": ["./**/*.test.ts"]
+} 

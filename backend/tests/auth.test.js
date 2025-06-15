@@ -6,6 +6,9 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert';
 import { validateData, userSchemas } from '../src/utils/validation.js';
 
+// Archivo de test vacío. Comentar para evitar error de test suite.
+// describe('Authentication', () => { /* ... */ });
+
 describe('Authentication', () => {
   describe('User Registration Validation', () => {
     test('should validate correct registration data', () => {

@@ -3,7 +3,10 @@
 import { RepoInputSchema, AnalyzerResultSchema, AnalyzerResult, RepoInput } from '../types';
 import { Logger } from 'pino';
 
-export async function analyzeRepo(input: unknown, log?: Logger): Promise<AnalyzerResult> {
+export async function analyzeRepo(
+  input: unknown,
+  log?: Logger
+): Promise<AnalyzerResult> {
   let parsedInput: RepoInput;
   try {
     parsedInput = RepoInputSchema.parse(input);

@@ -19,9 +19,10 @@ import { rateLimitMiddleware } from './middleware/rateLimiter.js';
 
 // Import routes
 import { apiRouter } from './routes/api.js';
-import { healthRouter } from './routes/health.js';
+import healthRouter from './routes/health.js';
 import { docsRouter } from './routes/docs.js';
 import agentRoutes from './routes/agentRoutes.js';
+import demoRouter from './routes/demo.js';
 
 // Load environment variables
 config();
@@ -148,6 +149,7 @@ app.use('/api', tenantMiddleware);
 
 // API routes with tenant context
 app.use('/api', apiRouter);
+app.use('/api/demo', demoRouter);
 
 // Documentation routes
 app.use('/api/docs', docsRouter);

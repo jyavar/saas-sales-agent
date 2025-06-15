@@ -2,6 +2,8 @@
  * Structured logging utility
  */
 
+import * as Sentry from '@sentry/node';
+
 const LOG_LEVELS = {
   error: 0,
   warn: 1,
@@ -10,6 +12,10 @@ const LOG_LEVELS = {
 };
 
 const currentLogLevel = LOG_LEVELS[process.env.LOG_LEVEL] || LOG_LEVELS.info;
+
+if (process.env.SENTRY_DSN) {
+  Sentry.init({ dsn: process.env.SENTRY_DSN });
+}
 
 /**
  * Format log message for different environments
@@ -43,6 +49,9 @@ function log(level, message, data = {}) {
   const formattedMessage = formatLogMessage(level, message, data);
   
   if (level === 'error') {
+    if (process.env.SENTRY_DSN) {
+      Sentry.captureException(data?.error || message);
+    }
     console.error(formattedMessage);
   } else if (level === 'warn') {
     console.warn(formattedMessage);

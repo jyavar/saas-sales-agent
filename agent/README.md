@@ -1,6 +1,22 @@
-# Strato AI Agent
+# StratoSalesAgent - Módulo Agent
 
-Este módulo ejecuta acciones automatizadas con IA.
+## Descripción
+Contiene la lógica principal del agente, integración con IA (OpenAI), prompts dinámicos y orquestación de campañas.
+
+## Estructura
+- `ai/` - Lógica de IA y generación de contenido.
+- `config/prompts/` - Prompts IA modulares.
+- `config/presets.ts` - Presets de campañas.
+- `core/` - Funciones principales del agente.
+
+## Añadir un nuevo prompt/preset
+Ver [config/prompts/README.md](./config/prompts/README.md).
+
+## Tests
+Ejecuta:
+```sh
+pnpm vitest run agent
+```
 
 ---
 

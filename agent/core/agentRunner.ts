@@ -4,12 +4,15 @@ import { dispatch } from '../dispatcher/dispatch';
 import { RepoInput } from '../types';
 import { Logger } from 'pino';
 import { z } from 'zod';
+import { campaignPresets } from '../config/presets';
+import { salesPrompts } from '../ai/prompts/sales';
 
 export const AgentInputSchema = z.object({
   campaignId: z.string(),
   repoUrl: z.string().url(),
   tenantId: z.string(),
   campaignName: z.string(),
+  presetKey: z.string().optional(),
 });
 
 export const AgentOutputSchema = z.object({
@@ -35,7 +38,8 @@ export async function runAgentForCampaign(input: AgentInput): Promise<AgentOutpu
     const analysis = await analyzeRepo({ repoUrl: parsed.repoUrl, tenantId: parsed.tenantId }, log);
     log.info({ analysis }, '✅ Análisis completado');
     log.info('📝 Generando campaña...');
-    const generated = generateCampaign(analysis, log);
+    const presetKey = (parsed.presetKey as keyof typeof campaignPresets) || 'sales';
+    const generated = await generateCampaign(analysis, presetKey, log);
     log.info({ generated }, '✅ Campaña generada');
     return {
       success: true,
@@ -55,14 +59,15 @@ export async function runAgentForCampaign(input: AgentInput): Promise<AgentOutpu
   }
 }
 
-export async function runAgentForRepo(input: RepoInput, log: Logger) {
+export async function runAgentForRepo(input: RepoInput & { presetKey?: string }, log: Logger) {
   try {
     log.info('🔍 Analizando repositorio...');
     const analysis = await analyzeRepo(input, log);
     log.info({ analysis }, '✅ Análisis completado');
 
     log.info('📝 Generando campaña...');
-    const campaign = generateCampaign(analysis, log);
+    const presetKey = (input.presetKey as keyof typeof campaignPresets) || 'sales';
+    const campaign = await generateCampaign(analysis, presetKey, log);
     log.info({ campaign }, '✅ Campaña generada');
 
     log.info('📤 Despachando campaña...');

@@ -15,65 +15,17 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ArrowUpDown, MoreHorizontal, Plus, Search } from "lucide-react"
 import { motion } from "framer-motion"
-
-const leads = [
-  {
-    id: "LEAD001",
-    name: "Alex Johnson",
-    email: "alex@techflow.com",
-    company: "TechFlow",
-    status: "New",
-    source: "GitHub",
-    lastActivity: "2 hours ago",
-  },
-  {
-    id: "LEAD002",
-    name: "Sarah Williams",
-    email: "sarah@datasync.io",
-    company: "DataSync",
-    status: "Contacted",
-    source: "LinkedIn",
-    lastActivity: "5 hours ago",
-  },
-  {
-    id: "LEAD003",
-    name: "Michael Chen",
-    email: "michael@cloudstack.dev",
-    company: "CloudStack",
-    status: "Meeting Scheduled",
-    source: "GitHub",
-    lastActivity: "1 day ago",
-  },
-  {
-    id: "LEAD004",
-    name: "Jessica Lee",
-    email: "jessica@devops.io",
-    company: "DevOps Inc",
-    status: "New",
-    source: "Website",
-    lastActivity: "3 days ago",
-  },
-  {
-    id: "LEAD005",
-    name: "David Wilson",
-    email: "david@aiplatform.com",
-    company: "AI Platform",
-    status: "Qualified",
-    source: "GitHub",
-    lastActivity: "1 week ago",
-  },
-  {
-    id: "LEAD006",
-    name: "Emily Brown",
-    email: "emily@dataflow.io",
-    company: "DataFlow",
-    status: "Disqualified",
-    source: "LinkedIn",
-    lastActivity: "2 weeks ago",
-  },
-]
+import { useEffect, useState } from "react"
+import { useLeads, Lead } from "@/hooks/use-leads"
 
 export default function LeadsPage() {
+  const { getLeads, loading, error } = useLeads()
+  const [leads, setLeads] = useState<Lead[]>([])
+
+  useEffect(() => {
+    getLeads().then(setLeads)
+  }, [])
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }} className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -182,8 +134,8 @@ export default function LeadsPage() {
                   <TableCell>{lead.company}</TableCell>
                   <TableCell>
                     <Badge
-                      variant={lead.status === "New" ? "default" : "outline"}
-                      className={lead.status === "New" ? "gradient-bg" : ""}
+                      variant={lead.status.toLowerCase() === "new" ? "default" : "outline"}
+                      className={lead.status.toLowerCase() === "new" ? "gradient-bg" : ""}
                     >
                       {lead.status}
                     </Badge>

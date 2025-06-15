@@ -24,62 +24,11 @@ export function useLeads() {
   const getLeads = async (): Promise<Lead[]> => {
     setLoading(true)
     setError(null)
-
     try {
-      // Simulación de API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // Mock data
-      return [
-        {
-          id: "1",
-          name: "John Smith",
-          email: "john@example.com",
-          company: "Acme Inc",
-          position: "CTO",
-          source: "GitHub",
-          status: "new",
-          score: 85,
-          lastActivity: "2023-06-10T14:30:00Z",
-          createdAt: "2023-06-01T10:30:00Z",
-        },
-        {
-          id: "2",
-          name: "Sarah Johnson",
-          email: "sarah@example.com",
-          company: "TechCorp",
-          position: "Engineering Manager",
-          source: "Website",
-          status: "contacted",
-          score: 72,
-          lastActivity: "2023-06-12T09:15:00Z",
-          createdAt: "2023-05-20T15:45:00Z",
-        },
-        {
-          id: "3",
-          name: "Michael Brown",
-          email: "michael@example.com",
-          company: "DevSolutions",
-          position: "Lead Developer",
-          source: "GitHub",
-          status: "qualified",
-          score: 91,
-          lastActivity: "2023-06-14T11:20:00Z",
-          createdAt: "2023-05-15T08:30:00Z",
-        },
-        {
-          id: "4",
-          name: "Emily Davis",
-          email: "emily@example.com",
-          company: "InnovateTech",
-          position: "Product Manager",
-          source: "Referral",
-          status: "converted",
-          score: 95,
-          lastActivity: "2023-06-08T16:45:00Z",
-          createdAt: "2023-04-28T13:15:00Z",
-        },
-      ] as Lead[]
+      const res = await fetch("/api/leads")
+      if (!res.ok) throw new Error("Failed to fetch leads")
+      const data = await res.json()
+      return data.leads || []
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch leads")
       return []
@@ -91,14 +40,11 @@ export function useLeads() {
   const getLeadById = async (id: string): Promise<Lead | null> => {
     setLoading(true)
     setError(null)
-
     try {
-      // Simulación de API call
-      await new Promise((resolve) => setTimeout(resolve, 800))
-
-      // Mock data
-      const leads = await getLeads()
-      return leads.find((lead) => lead.id === id) || null
+      const res = await fetch(`/api/leads/${id}`)
+      if (!res.ok) throw new Error("Failed to fetch lead")
+      const data = await res.json()
+      return data.lead || null
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch lead")
       return null
@@ -110,23 +56,16 @@ export function useLeads() {
   const createLead = async (leadData: Partial<Lead>) => {
     setLoading(true)
     setError(null)
-
     try {
-      // Simulación de API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
-      // En producción, aquí iría la llamada real a la API
-      // const response = await fetch("/api/leads", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify(leadData),
-      // })
-
-      // if (!response.ok) throw new Error("Failed to create lead")
-      // const data = await response.json()
-
+      const res = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(leadData),
+      })
+      if (!res.ok) throw new Error("Failed to create lead")
+      const data = await res.json()
       router.refresh()
-      return { id: "new-lead-id" }
+      return data.lead
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create lead")
       return null

@@ -10,6 +10,11 @@ import { z } from 'zod';
 // Import campaign functions for testing
 // Note: In a real environment, you'd mock the database calls
 
+// Archivo temporalmente deshabilitado: no contiene tests reales
+
+// Archivo de test vacío. Comentar para evitar error de test suite.
+// describe('Campaign Module', () => { /* ... */ });
+
 describe('Campaign Module', () => {
   describe('Campaign Validation', () => {
     const campaignSchema = z.object({

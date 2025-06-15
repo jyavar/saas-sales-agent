@@ -60,6 +60,26 @@ pnpm -r test
    node scripts/init.js
    ```
 
+## 🧠 Agentes IA Personalizables
+
+StratoSalesAgent permite definir múltiples perfiles de agente IA (ventas, soporte, onboarding, etc.) de forma modular y extensible.
+
+- Cada perfil tiene su propio prompt, personalidad y memoria.
+- El endpoint `/api/agent/orchestrate` acepta un campo `agentId` para seleccionar el perfil.
+- Ejemplo de uso:
+
+```json
+{
+  "userId": "user_123",
+  "eventType": "CAMPAIGN_STARTED",
+  "agentId": "support"
+}
+```
+
+Esto activa el agente de soporte definido en `backend/src/ai/agents/config.ts`.
+
+Consulta la [documentación detallada de agentes IA](backend/docs/agents.md) para aprender a crear y personalizar perfiles.
+
 ---
 
 > Esta plantilla es la base para SaaS con IA conversacional y backend modular multi-agente. 

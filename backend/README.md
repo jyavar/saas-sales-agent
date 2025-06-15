@@ -384,3 +384,106 @@ POST /api/campaigns
 **Última actualización**: Diciembre 2024  
 **Versión**: 1.0.0  
 **Estado**: ✅ Production Ready
+
+## Descripción
+API REST, validación Zod, persistencia (Supabase), email productivo (Resend), endpoints para campañas y actividades.
+
+## Estructura
+- `src/` - Código fuente principal.
+- `models/` - Esquemas Zod centralizados.
+- `controllers/` - Lógica de endpoints.
+- `services/` - Integraciones externas.
+
+## Variables de entorno
+Ver [docs/ENV.md](./docs/ENV.md).
+
+## Pipeline de campaña
+Ver [docs/AGENT_PIPELINE.md](./docs/AGENT_PIPELINE.md).
+
+## Tests
+Ejecuta:
+```sh
+pnpm vitest run backend
+```
+
+## 🚀 Quickstart
+
+### 1. Instalar dependencias
+```sh
+pnpm install
+```
+
+### 2. Variables de entorno
+Copia `.env.example` a `.env` y completa los valores:
+```sh
+cp backend/.env.example backend/.env
+```
+
+### 3. Correr en desarrollo
+```sh
+pnpm --filter backend dev
+```
+
+### 4. Correr en producción
+```sh
+pnpm --filter backend build && pnpm --filter backend start
+```
+
+### 5. Ejecutar tests
+```sh
+pnpm --filter backend vitest run --coverage
+```
+
+### 6. Despliegue (Railway/Vercel)
+- Configura variables de entorno en el dashboard de Railway/Vercel.
+- El workflow de GitHub Actions despliega automáticamente a staging y producción.
+
+### 7. CI/CD y Rollback
+- El pipeline ejecuta: lint → build → deploy staging → smoke test → deploy prod.
+- Si el healthcheck falla, el deploy se cancela y puedes ejecutar rollback manual con:
+```sh
+node scripts/rollback.js production
+```
+
+### 8. Variables de entorno
+Consulta `.env.example` y la sección de [Variables de Entorno](#variables-de-entorno) para detalles de cada variable.
+
+### 9. Documentación y Swagger
+- Accede a la documentación OpenAPI en `/api/docs/openapi.json`.
+- Actualiza el spec editando los controladores y rutas.
+
+### 10. Restauración y Backups
+- Supabase realiza backups automáticos.
+- Para restaurar, sigue la guía en `DEPLOYMENT.md` y usa los scripts de `supabase/migrations/`.
+
+---
+
+## Variables de Entorno
+
+| Variable                | Descripción                                 |
+|-------------------------|---------------------------------------------|
+| SUPABASE_URL            | URL de tu proyecto Supabase                 |
+| SUPABASE_ANON_KEY       | Clave anónima de Supabase                   |
+| SUPABASE_SERVICE_ROLE_KEY | Clave de rol de servicio Supabase         |
+| STRIPE_SECRET_KEY       | Clave secreta de Stripe                     |
+| STRIPE_WEBHOOK_SECRET   | Webhook secret de Stripe                    |
+| STRIPE_PUBLISHABLE_KEY  | Clave pública de Stripe                     |
+| RESEND_API_KEY          | API key de Resend                           |
+| RESEND_WEBHOOK_SECRET   | Webhook secret de Resend                    |
+| GITHUB_TOKEN            | Token de GitHub para análisis de repos      |
+| GITHUB_WEBHOOK_SECRET   | Webhook secret de GitHub                    |
+| OPENAI_API_KEY          | API key de OpenAI                           |
+| OPENAI_ORG_ID           | ID de organización de OpenAI                |
+| JWT_SECRET              | Secreto JWT para autenticación              |
+| JWT_EXPIRES_IN          | Expiración del JWT (ej: 7d)                 |
+| PORT                    | Puerto del servidor                         |
+| NODE_ENV                | Entorno (development/production)            |
+| LOG_LEVEL               | Nivel de logs                               |
+| ALLOWED_ORIGINS         | Orígenes permitidos para CORS               |
+| SENTRY_DSN              | DSN de Sentry para monitoreo                |
+| ENABLE_METRICS          | Habilitar métricas                          |
+
+---
+
+## Despliegue y restauración
+Consulta `DEPLOYMENT.md` para detalles avanzados de despliegue, backups y restauración.

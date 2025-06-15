@@ -1,15 +1,16 @@
 import express from 'express';
-import { orchestrateEvent } from '../ai/orchestrator.js';
-import { logUserInteraction } from '../services/loggingService.js';
-import { supabaseAdmin } from '../services/supabase.js';
 import { z } from 'zod';
+import { orchestrateEvent } from '../ai/orchestrator.js';
+import { logUserInteraction } from '../utils/common/logger.js';
+import { supabaseAdmin } from '../services/supabase.js';
 
 const router = express.Router();
 
-const orchestrateSchema = z.object({
-  userId: z.string().min(1),
-  eventType: z.enum(['CAMPAIGN_STARTED', 'CAMPAIGN_VIEWED', 'ACTION_TAKEN']),
-  metadata: z.record(z.any()).optional(),
+const AgentEventSchema = z.object({
+  userId: z.string(),
+  eventType: z.string(),
+  campaignId: z.string().optional(),
+  agentId: z.string().optional(), // para seleccionar personalidad o flujo
 });
 
 /**
@@ -72,33 +73,20 @@ const orchestrateSchema = z.object({
  *                   example: Internal server error
  */
 router.post('/orchestrate', async (req, res) => {
+  const parseResult = AgentEventSchema.safeParse(req.body);
+  if (!parseResult.success) return res.status(400).json({ error: 'Invalid input' });
+
+  const { userId, eventType, campaignId, agentId = 'sales' } = parseResult.data;
+
+  logUserInteraction(`Agent triggered: user=${userId}, event=${eventType}, agent=${agentId}`);
+
   try {
-    const parseResult = orchestrateSchema.safeParse(req.body);
-    if (!parseResult.success) {
-      return res.status(400).json({ error: 'Invalid payload', details: parseResult.error.errors });
-    }
-    const { userId, eventType, metadata } = parseResult.data;
-    const campaignId = metadata?.campaignId || '';
-    await logUserInteraction(userId, campaignId, `Orchestrator endpoint called: eventType=${eventType}, campaignId=${campaignId}`);
-    // Orquestar y obtener mensaje generado
-    const message = await orchestrateEvent({
-      userId,
-      campaignId,
-      event: eventType,
-      metadata
-    });
-    // Persistir en Supabase
-    const { error: dbError } = await supabaseAdmin
-      .from('agent_activities')
-      .insert({ user_id: userId, event_type: eventType, campaign_id: campaignId, message });
-    if (dbError) {
-      await logUserInteraction(userId, campaignId, `DB error: ${dbError.message}`);
-      return res.status(500).json({ error: 'Failed to persist activity', details: dbError.message });
-    }
-    res.status(200).json({ message });
-  } catch (error) {
-    await logUserInteraction(req.body?.userId || 'unknown', req.body?.metadata?.campaignId || '', `Error: ${error.message}`);
-    res.status(500).json({ error: 'Internal server error', details: error.message });
+    // Extiende según el tipo de agente
+    const result = await orchestrateEvent({ userId, event: eventType, campaignId, agentId });
+    res.status(200).json(result);
+  } catch (err) {
+    console.error('Agent orchestration failed', err);
+    res.status(500).json({ error: 'Agent orchestration failed' });
   }
 });
 

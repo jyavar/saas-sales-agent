@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -31,79 +31,28 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 
-// Mock template data
-const mockTemplates = [
-  {
-    id: "template-1",
-    name: "Initial Outreach",
-    category: "Cold Outreach",
-    status: "Active",
-    lastEdited: "2 days ago",
-    starred: true,
-  },
-  {
-    id: "template-2",
-    name: "Follow-up",
-    category: "Follow-up",
-    status: "Active",
-    lastEdited: "1 week ago",
-    starred: false,
-  },
-  {
-    id: "template-3",
-    name: "Product Demo Request",
-    category: "Demo",
-    status: "Active",
-    lastEdited: "3 days ago",
-    starred: true,
-  },
-  {
-    id: "template-4",
-    name: "Re-engagement",
-    category: "Re-engagement",
-    status: "Draft",
-    lastEdited: "1 day ago",
-    starred: false,
-  },
-  {
-    id: "template-5",
-    name: "Competitor Analysis",
-    category: "Cold Outreach",
-    status: "Active",
-    lastEdited: "2 weeks ago",
-    starred: false,
-  },
-]
-
-// Mock template content
-const mockTemplateContent = `
-<p>Hi {{first_name}},</p>
-
-<p>I noticed that {{company}} has been growing rapidly in the {{industry}} space, and I thought you might be interested in how we've been helping similar companies improve their {{pain_point}}.</p>
-
-<p>Our platform has helped companies like yours achieve:</p>
-
-<ul>
-  <li>{{benefit_1}}</li>
-  <li>{{benefit_2}}</li>
-  <li>{{benefit_3}}</li>
-</ul>
-
-<p>Would you be open to a quick 15-minute call this {{day}} to discuss how we might be able to help {{company}} as well?</p>
-
-<p>Best regards,<br>{{sender_name}}<br>{{sender_title}}</p>
-`
-
 export default function TemplatesPage() {
-  const [activeTemplate, setActiveTemplate] = useState(mockTemplates[0])
+  const [templates, setTemplates] = useState<any[]>([])
+  const [activeTemplate, setActiveTemplate] = useState<any | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
-  const [editorContent, setEditorContent] = useState(mockTemplateContent)
+  const [editorContent, setEditorContent] = useState("")
   const [activeTab, setActiveTab] = useState("edit")
-  const [templateName, setTemplateName] = useState(activeTemplate.name)
+  const [templateName, setTemplateName] = useState("")
   const [isSaving, setIsSaving] = useState(false)
 
+  useEffect(() => {
+    fetch("/api/templates")
+      .then(res => res.json())
+      .then(data => {
+        setTemplates(data.templates || [])
+        setActiveTemplate(data.templates?.[0] || null)
+        setTemplateName(data.templates?.[0]?.name || "")
+        setEditorContent(data.templates?.[0]?.content || "")
+      })
+  }, [])
+
   // Filter templates based on search query
-  const filteredTemplates = mockTemplates.filter(
+  const filteredTemplates = templates.filter(
     (template) =>
       template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       template.category.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -112,7 +61,7 @@ export default function TemplatesPage() {
   // Handle save action
   const handleSave = () => {
     setIsSaving(true)
-    // Simulate API call
+    // TODO: Implement API call to save template
     setTimeout(() => {
       setIsSaving(false)
     }, 1000)
@@ -153,7 +102,7 @@ export default function TemplatesPage() {
                   <div
                     key={template.id}
                     className={`p-3 rounded-md cursor-pointer transition-colors ${
-                      activeTemplate.id === template.id
+                      activeTemplate?.id === template.id
                         ? "bg-slate-100 dark:bg-slate-800"
                         : "hover:bg-slate-50 dark:hover:bg-slate-900"
                     }`}

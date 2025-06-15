@@ -87,46 +87,48 @@ export const paginationSchema = z.object({
   filters: z.record(z.any()).optional()
 });
 
-/**
- * Lead validation schemas
- */
+// Lead validation schemas (refactor para evitar ciclo)
+const leadCreateSchema = z.object({
+  email: commonSchemas.email,
+  firstName: commonSchemas.name,
+  lastName: commonSchemas.name,
+  company: z.string().max(100).optional(),
+  jobTitle: z.string().max(100).optional(),
+  phone: commonSchemas.phone,
+  website: commonSchemas.url.optional(),
+  linkedinUrl: commonSchemas.url.optional(),
+  source: z.enum(['website', 'social_media', 'email_campaign', 'referral', 'ai_agent', 'manual', 'api']).default('manual'),
+  priority: z.enum(['low', 'medium', 'high', 'urgent']).default('medium'),
+  tags: commonSchemas.tags,
+  customFields: commonSchemas.metadata,
+  qualificationNotes: commonSchemas.description
+});
+
+const leadUpdateSchema = z.object({
+  firstName: commonSchemas.name.optional(),
+  lastName: commonSchemas.name.optional(),
+  company: z.string().max(100).optional(),
+  jobTitle: z.string().max(100).optional(),
+  phone: commonSchemas.phone,
+  website: commonSchemas.url.optional(),
+  linkedinUrl: commonSchemas.url.optional(),
+  status: z.enum(['new', 'contacted', 'qualified', 'converted', 'lost', 'nurturing']).optional(),
+  priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
+  score: z.number().int().min(0).max(100).optional(),
+  tags: commonSchemas.tags,
+  customFields: commonSchemas.metadata,
+  qualificationNotes: commonSchemas.description,
+  nextFollowUpAt: z.string().datetime().optional()
+});
+
+const leadBulkCreateSchema = z.object({
+  leads: z.array(leadCreateSchema).min(1, 'At least one lead required').max(100, 'Too many leads')
+});
+
 export const leadSchemas = {
-  create: z.object({
-    email: commonSchemas.email,
-    firstName: commonSchemas.name,
-    lastName: commonSchemas.name,
-    company: z.string().max(100).optional(),
-    jobTitle: z.string().max(100).optional(),
-    phone: commonSchemas.phone,
-    website: commonSchemas.url.optional(),
-    linkedinUrl: commonSchemas.url.optional(),
-    source: z.enum(['website', 'social_media', 'email_campaign', 'referral', 'ai_agent', 'manual', 'api']).default('manual'),
-    priority: z.enum(['low', 'medium', 'high', 'urgent']).default('medium'),
-    tags: commonSchemas.tags,
-    customFields: commonSchemas.metadata,
-    qualificationNotes: commonSchemas.description
-  }),
-
-  update: z.object({
-    firstName: commonSchemas.name.optional(),
-    lastName: commonSchemas.name.optional(),
-    company: z.string().max(100).optional(),
-    jobTitle: z.string().max(100).optional(),
-    phone: commonSchemas.phone,
-    website: commonSchemas.url.optional(),
-    linkedinUrl: commonSchemas.url.optional(),
-    status: z.enum(['new', 'contacted', 'qualified', 'converted', 'lost', 'nurturing']).optional(),
-    priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
-    score: z.number().int().min(0).max(100).optional(),
-    tags: commonSchemas.tags,
-    customFields: commonSchemas.metadata,
-    qualificationNotes: commonSchemas.description,
-    nextFollowUpAt: z.string().datetime().optional()
-  }),
-
-  bulkCreate: z.object({
-    leads: z.array(leadSchemas.create).min(1, 'At least one lead required').max(100, 'Too many leads')
-  })
+  create: leadCreateSchema,
+  update: leadUpdateSchema,
+  bulkCreate: leadBulkCreateSchema
 };
 
 /**

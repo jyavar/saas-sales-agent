@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Configuration, OpenAIApi, CreateChatCompletionRequest, CreateCompletionRequest, CreateEmbeddingRequest } from 'openai';
+import OpenAI from 'openai';
 
 // Validación de configuración
 const openaiConfigSchema = z.object({
@@ -14,12 +14,10 @@ const openaiConfig = openaiConfigSchema.parse({
   OPENAI_DEFAULT_MODEL: process.env.OPENAI_DEFAULT_MODEL,
 });
 
-const configuration = new Configuration({
+const openai = new OpenAI({
   apiKey: openaiConfig.OPENAI_API_KEY,
   organization: openaiConfig.OPENAI_ORG_ID,
 });
-
-const openai = new OpenAIApi(configuration);
 
 export class OpenAIService {
   private defaultModel: string;
@@ -31,13 +29,14 @@ export class OpenAIService {
   /**
    * Chat completion (conversational LLM)
    */
-  async chatCompletion(params: Omit<CreateChatCompletionRequest, 'model'> & { model?: string }) {
+  async chatCompletion(params: { messages: any[]; model?: string; [key: string]: any }) {
     try {
-      const response = await openai.createChatCompletion({
+      const response = await openai.chat.completions.create({
         ...params,
         model: params.model || this.defaultModel,
+        messages: params.messages,
       });
-      return response.data;
+      return response;
     } catch (err) {
       console.error('[OpenAI] Chat completion error:', err);
       throw err;
@@ -47,13 +46,14 @@ export class OpenAIService {
   /**
    * Text completion (legacy)
    */
-  async textCompletion(params: Omit<CreateCompletionRequest, 'model'> & { model?: string }) {
+  async textCompletion(params: { prompt: string; model?: string; [key: string]: any }) {
     try {
-      const response = await openai.createCompletion({
+      const response = await openai.completions.create({
         ...params,
         model: params.model || this.defaultModel,
+        prompt: params.prompt,
       });
-      return response.data;
+      return response;
     } catch (err) {
       console.error('[OpenAI] Text completion error:', err);
       throw err;
@@ -63,17 +63,33 @@ export class OpenAIService {
   /**
    * Embeddings
    */
-  async createEmbedding(params: Omit<CreateEmbeddingRequest, 'model'> & { model?: string }) {
+  async createEmbedding(params: { input: string | string[]; model?: string; [key: string]: any }) {
     try {
-      const response = await openai.createEmbedding({
+      const response = await openai.embeddings.create({
         ...params,
         model: params.model || this.defaultModel,
+        input: params.input,
       });
-      return response.data;
+      return response;
     } catch (err) {
       console.error('[OpenAI] Embedding error:', err);
       throw err;
     }
+  }
+
+  /**
+   * Genera un mensaje de agente usando systemPrompt y contexto
+   */
+  async generateAgentMessage({ systemPrompt, context }: { systemPrompt: string; context: any }) {
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: JSON.stringify(context) },
+    ];
+    const response = await this.chatCompletion({
+      messages,
+      model: this.defaultModel,
+    });
+    return response.choices?.[0]?.message?.content || '';
   }
 
   // TODO: Fallback a otros proveedores, cache, control de costos

@@ -19,4 +19,4 @@ router.get('/ready', healthController.readinessProbe);
 // Liveness probe
 router.get('/live', healthController.livenessProbe);
 
-export const healthRouter = router;
+export default router;
