@@ -7,12 +7,13 @@ import { validateData, validateQueryParams } from '../utils/validation.js';
 import { leadSchemas, paginationSchema } from '../utils/validation.js';
 import { ValidationError, NotFoundError } from '../utils/common/errorHandler.js';
 import { listLeads as dalListLeads, createLead as dalCreateLead, getLeadById as dalGetLeadById, updateLead as dalUpdateLead, deleteLead as dalDeleteLead } from '../core/db/leadDataAccess.js';
+import { Request, Response, NextFunction } from 'express';
 
 export class LeadController {
   /**
    * List leads with pagination and filtering
    */
-  async listLeads(req, res, next) {
+  async listLeads(req: Request, res: Response, next: NextFunction) {
     try {
       // Validate query parameters
       const queryValidation = validateQueryParams(req.query, paginationSchema);
@@ -22,13 +23,13 @@ export class LeadController {
 
       const { page, limit } = queryValidation.data;
       const { status, source, priority } = req.query;
-      const filters = {};
+      const filters: { [key: string]: any } = {};
       if (status) filters.status = status;
       if (source) filters.source = source;
       if (priority) filters.priority = priority;
 
       // Get leads from DAL
-      const leads = await dalListLeads(req.tenant.id, filters, limit, (page - 1) * limit);
+      const leads = await dalListLeads(req.tenant!.id, filters, limit, (page - 1) * limit);
 
       res.json({
         success: true,
@@ -50,7 +51,7 @@ export class LeadController {
   /**
    * Create new lead
    */
-  async createLead(req, res, next) {
+  async createLead(req: Request, res: Response, next: NextFunction) {
     try {
       // Validate lead data
       const validation = validateData(req.body, leadSchemas.create);
@@ -59,6 +60,7 @@ export class LeadController {
       }
       const leadData = validation.data;
       const formattedLead = {
+        tenant_id: req.tenant!.id,
         email: leadData.email,
         first_name: leadData.firstName,
         last_name: leadData.lastName,
@@ -73,15 +75,16 @@ export class LeadController {
         tags: leadData.tags || [],
         custom_fields: leadData.customFields || {},
         qualification_notes: leadData.qualificationNotes,
-        created_by: req.user?.id || null
+        created_by: req.user?.id || null,
+        score: leadData.score ?? 0
       };
-      const lead = await dalCreateLead(req.tenant.id, formattedLead);
+      const lead = await dalCreateLead(req.tenant!.id, formattedLead) as any;
       logger.info('Lead created', {
         leadId: lead.id,
         email: lead.email,
-        tenantId: req.tenant.id,
+        tenantId: req.tenant!.id,
         userId: req.user?.id,
-        requestId: req.id
+        requestId: req.id ?? ''
       });
       res.status(201).json({
         success: true,
@@ -96,10 +99,10 @@ export class LeadController {
   /**
    * Get lead by ID
    */
-  async getLead(req, res, next) {
+  async getLead(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const lead = await dalGetLeadById(req.tenant.id, id);
+      const lead = await dalGetLeadById(req.tenant!.id, id);
       if (!lead) {
         throw new NotFoundError('Lead not found');
       }
@@ -116,7 +119,7 @@ export class LeadController {
   /**
    * Update lead
    */
-  async updateLead(req, res, next) {
+  async updateLead(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
 
@@ -129,7 +132,7 @@ export class LeadController {
       const updates = validation.data;
 
       // Format updates
-      const formattedUpdates = {
+      const formattedUpdates: {[key: string]: any} = {
         first_name: updates.firstName,
         last_name: updates.lastName,
         company: updates.company,
@@ -156,30 +159,30 @@ export class LeadController {
       });
 
       // Update lead
-      const result = await dalUpdateLead(req.tenant.id, id, formattedUpdates);
+      const result = await dalUpdateLead(req.tenant!.id, id, formattedUpdates);
 
-      if (!result.success) {
+      if (!(result as any).success) {
         throw new NotFoundError('Lead not found');
       }
 
       logger.info('Lead updated', {
         leadId: id,
-        tenantId: req.tenant.id,
+        tenantId: req.tenant!.id,
         userId: req.user?.id,
         updates: Object.keys(formattedUpdates),
-        requestId: req.id
+        requestId: req.id ?? ''
       });
 
       res.json({
         success: true,
         message: 'Lead updated successfully',
         lead: {
-          id: result.data.id,
-          email: result.data.email,
-          firstName: result.data.first_name,
-          lastName: result.data.last_name,
-          status: result.data.status,
-          updatedAt: result.data.updated_at
+          id: (result as any).data.id,
+          email: (result as any).data.email,
+          firstName: (result as any).data.first_name,
+          lastName: (result as any).data.last_name,
+          status: (result as any).data.status,
+          updatedAt: (result as any).data.updated_at
         }
       });
     } catch (error) {
@@ -190,21 +193,21 @@ export class LeadController {
   /**
    * Delete lead
    */
-  async deleteLead(req, res, next) {
+  async deleteLead(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
 
-      const result = await dalDeleteLead(req.tenant.id, id);
+      const result = await dalDeleteLead(req.tenant!.id, id);
 
-      if (!result.success) {
+      if (!(result as any).success) {
         throw new NotFoundError('Lead not found');
       }
 
       logger.info('Lead deleted', {
         leadId: id,
-        tenantId: req.tenant.id,
+        tenantId: req.tenant!.id,
         userId: req.user?.id,
-        requestId: req.id
+        requestId: req.id ?? ''
       });
 
       res.json({
@@ -219,7 +222,7 @@ export class LeadController {
   /**
    * Bulk create leads
    */
-  async bulkCreateLeads(req, res, next) {
+  async bulkCreateLeads(req: Request, res: Response, next: NextFunction) {
     try {
       // Validate bulk data
       const validation = validateData(req.body, leadSchemas.bulkCreate);
@@ -230,8 +233,8 @@ export class LeadController {
       const { leads } = validation.data;
 
       // Format leads
-      const formattedLeads = leads.map(lead => ({
-        tenant_id: req.tenant.id,
+      const formattedLeads = leads.map((lead: any) => ({
+        tenant_id: req.tenant!.id,
         email: lead.email,
         first_name: lead.firstName,
         last_name: lead.lastName,
@@ -252,7 +255,7 @@ export class LeadController {
       }));
 
       // Insert leads
-      const { data, error } = await dalCreateLead(req.tenant.id, formattedLeads);
+      const { data, error } = (await dalCreateLead(req.tenant!.id, formattedLeads) as any);
 
       if (error) {
         throw error;
@@ -260,14 +263,14 @@ export class LeadController {
 
       logger.info('Bulk leads created', {
         count: formattedLeads.length,
-        tenantId: req.tenant.id,
+        tenantId: req.tenant!.id,
         userId: req.user?.id,
-        requestId: req.id
+        requestId: req.id ?? ''
       });
 
       res.status(201).json({
         success: true,
-        message: `${data.length} leads created successfully`,
+        message: `${(data as any).length} leads created successfully`,
         leads: data
       });
     } catch (error) {
@@ -278,37 +281,37 @@ export class LeadController {
   /**
    * Get lead statistics
    */
-  async getLeadsStats(req, res, next) {
+  async getLeadsStats(req: Request, res: Response, next: NextFunction) {
     try {
       // Get counts by status
-      const statusCounts = {};
+      const statusCounts: { [key: string]: any } = {};
       const statuses = ['new', 'contacted', 'qualified', 'converted', 'lost', 'nurturing'];
 
       for (const status of statuses) {
-        const result = await dalListLeads(req.tenant.id, { status }, 0, 0);
-        statusCounts[status] = result.length || 0;
+        const result = await dalListLeads(req.tenant!.id, { status }, 0, 0);
+        statusCounts[status] = (result as any).length || 0;
       }
 
       // Get counts by source
-      const sourceCounts = {};
+      const sourceCounts: { [key: string]: any } = {};
       const sources = ['website', 'social_media', 'email_campaign', 'referral', 'ai_agent', 'manual', 'api'];
 
       for (const source of sources) {
-        const result = await dalListLeads(req.tenant.id, { source }, 0, 0);
-        sourceCounts[source] = result.length || 0;
+        const result = await dalListLeads(req.tenant!.id, { source }, 0, 0);
+        sourceCounts[source] = (result as any).length || 0;
       }
 
       // Get counts by priority
-      const priorityCounts = {};
+      const priorityCounts: { [key: string]: any } = {};
       const priorities = ['low', 'medium', 'high', 'urgent'];
 
       for (const priority of priorities) {
-        const result = await dalListLeads(req.tenant.id, { priority }, 0, 0);
-        priorityCounts[priority] = result.length || 0;
+        const result = await dalListLeads(req.tenant!.id, { priority }, 0, 0);
+        priorityCounts[priority] = (result as any).length || 0;
       }
 
       // Get recent leads
-      const recentLeads = await dalListLeads(req.tenant.id, {}, 5, 0);
+      const recentLeads = await dalListLeads(req.tenant!.id, {}, 5, 0);
 
       res.json({
         success: true,
@@ -316,8 +319,8 @@ export class LeadController {
           statusCounts,
           sourceCounts,
           priorityCounts,
-          total: Object.values(statusCounts).reduce((sum, count) => sum + count, 0),
-          recentLeads: recentLeads.map(lead => ({
+          total: Object.values(statusCounts).reduce((sum: number, count: number) => sum + count, 0),
+          recentLeads: recentLeads.map((lead: any) => ({
             id: lead.id,
             email: lead.email,
             firstName: lead.first_name,

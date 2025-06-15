@@ -150,9 +150,10 @@ export async function signOutUser(): Promise<{ success: boolean }> {
 
 export async function getUserByToken(token: string): Promise<UserProfile | null> {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
     const userId = decoded.sub;
-    return await getUserById(userId);
+    if (!userId) throw new Error('Invalid userId');
+    return await getUserById(String(userId));
   } catch (error: any) {
     logger.error('[DAL] getUserByToken failed', { error: error.message });
     return null;

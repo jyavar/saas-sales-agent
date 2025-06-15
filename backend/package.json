@@ -5,8 +5,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/server.js",
+    "dev": "tsx src/server.ts",
     "test": "vitest run --config vitest.config.ts",
     "test:watch": "node --test --watch tests/**/*.test.js",
     "test:integration": "node --test tests/integration/*.test.js",
@@ -43,6 +44,7 @@
     "check-env": "ts-node scripts/check-env.ts"
   },
   "dependencies": {
+    "@sentry/node": "^9.29.0",
     "@supabase/supabase-js": "^2.39.0",
     "bcryptjs": "^2.4.3",
     "compression": "^1.7.4",
@@ -56,11 +58,20 @@
     "openai": "5.3.0",
     "resend": "^3.2.0",
     "stripe": "^14.12.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@types/compression": "^1.8.1",
+    "@types/cors": "^2.8.19",
+    "@types/dotenv": "^8.2.3",
+    "@types/express": "^5.0.3",
     "@types/jest": "^29.5.14",
+    "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^20.19.0",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "@vitest/coverage-istanbul": "^3.2.3",
     "@vitest/ui": "^3.2.3",
     "artillery": "^2.0.0",
@@ -68,7 +79,7 @@
     "jsdom": "^23.0.0",
     "prettier": "^3.1.0",
     "supertest": "^7.1.1",
-    "ts-node": "^10.9.2",
+    "tsx": "^4.20.3",
     "typescript": "^5.0.0",
     "vitest": "^3.2.3"
   },

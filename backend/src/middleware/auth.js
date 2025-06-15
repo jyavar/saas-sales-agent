@@ -5,7 +5,7 @@
 import jwt from 'jsonwebtoken';
 import { supabaseAdmin } from '../services/supabase.js';
 import { logger } from '../utils/common/logger.js';
-import { UnauthorizedError, ForbiddenError } from '../utils/common/errorHandler.js';
+import { UnauthorizedError, ForbiddenError } from '../utils/common/errorHandler.ts';
 
 /**
  * JWT authentication middleware for frontend users

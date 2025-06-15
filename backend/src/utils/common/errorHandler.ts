@@ -8,7 +8,12 @@ import { logger, logError } from './logger.js';
  * Custom error classes
  */
 export class AppError extends Error {
-  constructor(message, statusCode = 500, code = 'INTERNAL_ERROR', details = null) {
+  statusCode: number;
+  code: string;
+  details: any;
+  isOperational: boolean;
+
+  constructor(message: string, statusCode: number = 500, code: string = 'INTERNAL_ERROR', details: any = null) {
     super(message);
     this.name = this.constructor.name;
     this.statusCode = statusCode;
@@ -21,49 +26,49 @@ export class AppError extends Error {
 }
 
 export class ValidationError extends AppError {
-  constructor(message, details = null) {
+  constructor(message: string, details: any = null) {
     super(message, 400, 'VALIDATION_ERROR', details);
   }
 }
 
 export class UnauthorizedError extends AppError {
-  constructor(message = 'Unauthorized') {
+  constructor(message: string = 'Unauthorized') {
     super(message, 401, 'UNAUTHORIZED');
   }
 }
 
 export class ForbiddenError extends AppError {
-  constructor(message = 'Forbidden') {
+  constructor(message: string = 'Forbidden') {
     super(message, 403, 'FORBIDDEN');
   }
 }
 
 export class NotFoundError extends AppError {
-  constructor(message = 'Resource not found') {
+  constructor(message: string = 'Resource not found') {
     super(message, 404, 'NOT_FOUND');
   }
 }
 
 export class ConflictError extends AppError {
-  constructor(message = 'Resource conflict') {
+  constructor(message: string = 'Resource conflict') {
     super(message, 409, 'CONFLICT');
   }
 }
 
 export class TooManyRequestsError extends AppError {
-  constructor(message = 'Too many requests', details = null) {
+  constructor(message: string = 'Too many requests', details: any = null) {
     super(message, 429, 'TOO_MANY_REQUESTS', details);
   }
 }
 
 export class DatabaseError extends AppError {
-  constructor(message = 'Database error', originalError = null) {
+  constructor(message: string = 'Database error', originalError: any = null) {
     super(message, 500, 'DATABASE_ERROR', originalError);
   }
 }
 
 export class ExternalServiceError extends AppError {
-  constructor(message = 'External service error', service = null) {
+  constructor(message: string = 'External service error', service: any = null) {
     super(message, 502, 'EXTERNAL_SERVICE_ERROR', { service });
   }
 }
@@ -71,7 +76,7 @@ export class ExternalServiceError extends AppError {
 /**
  * Global error handler middleware
  */
-export const globalErrorHandler = (error, req, res, next) => {
+export const globalErrorHandler = (error: any, req: any, res: any, next: any) => {
   // Log the error
   logError(error, {
     requestId: req.id,
@@ -197,7 +202,7 @@ export const globalErrorHandler = (error, req, res, next) => {
  * Handle unhandled promise rejections
  */
 export const handleUnhandledRejection = () => {
-  process.on('unhandledRejection', (reason, promise) => {
+  process.on('unhandledRejection', (reason: any, promise: any) => {
     logger.error('Unhandled Promise Rejection', {
       reason: reason?.message || reason,
       stack: reason?.stack,
@@ -213,7 +218,7 @@ export const handleUnhandledRejection = () => {
  * Handle uncaught exceptions
  */
 export const handleUncaughtException = () => {
-  process.on('uncaughtException', (error) => {
+  process.on('uncaughtException', (error: any) => {
     logger.error('Uncaught Exception', {
       error: {
         name: error.name,
@@ -230,8 +235,8 @@ export const handleUncaughtException = () => {
 /**
  * Async error wrapper for route handlers
  */
-export const asyncHandler = (fn) => {
-  return (req, res, next) => {
+export const asyncHandler = (fn: any) => {
+  return (req: any, res: any, next: any) => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };
 };
@@ -239,7 +244,7 @@ export const asyncHandler = (fn) => {
 /**
  * Create error response
  */
-export const createErrorResponse = (error, requestId = null) => {
+export const createErrorResponse = (error: any, requestId: string | null = null) => {
   return {
     success: false,
     error: {

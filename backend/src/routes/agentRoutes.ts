@@ -1,8 +1,10 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { orchestrateEvent } from '../ai/orchestrator.js';
-import { logUserInteraction } from '../utils/common/logger.js';
+import { logger } from '../utils/common/logger.js';
 import { supabaseAdmin } from '../services/supabase.js';
+import { asyncHandler } from '../utils/common/errorHandler.js';
+import { OrchestratorEvent } from '../ai/orchestrator.js';
 
 const router = express.Router();
 
@@ -72,23 +74,23 @@ const AgentEventSchema = z.object({
  *                   type: string
  *                   example: Internal server error
  */
-router.post('/orchestrate', async (req, res) => {
+router.post('/orchestrate', asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   const parseResult = AgentEventSchema.safeParse(req.body);
   if (!parseResult.success) return res.status(400).json({ error: 'Invalid input' });
 
   const { userId, eventType, campaignId, agentId = 'sales' } = parseResult.data;
 
-  logUserInteraction(`Agent triggered: user=${userId}, event=${eventType}, agent=${agentId}`);
+  logger.info(`Agent triggered: user=${userId}, event=${eventType}, agent=${agentId}`);
 
   try {
     // Extiende según el tipo de agente
-    const result = await orchestrateEvent({ userId, event: eventType, campaignId, agentId });
+    const result = await orchestrateEvent({ userId, event: eventType as OrchestratorEvent, campaignId, agentId });
     res.status(200).json(result);
   } catch (err) {
     console.error('Agent orchestration failed', err);
     res.status(500).json({ error: 'Agent orchestration failed' });
   }
-});
+}));
 
 /**
  * @openapi
@@ -135,7 +137,7 @@ router.post('/orchestrate', async (req, res) => {
  *       500:
  *         description: Error interno del servidor
  */
-router.get('/activities', async (req, res) => {
+router.get('/activities', asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.query.userId;
   if (!userId) {
     return res.status(400).json({ error: 'userId is required' });
@@ -147,11 +149,11 @@ router.get('/activities', async (req, res) => {
       .eq('user_id', userId)
       .order('timestamp', { ascending: false })
       .limit(50);
-    if (error) return res.status(500).json({ error: 'Failed to fetch activities', details: error.message });
+    if (error) return res.status(500).json({ error: 'Failed to fetch activities', details: (error as any).message });
     res.json({ activities: data });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error', details: error.message });
+    res.status(500).json({ error: 'Internal server error', details: (error as any).message });
   }
-});
+}));
 
 export default router; 

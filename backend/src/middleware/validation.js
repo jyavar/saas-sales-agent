@@ -3,7 +3,7 @@
  */
 
 import { logger } from '../utils/common/logger.js';
-import { ValidationError } from '../utils/common/errorHandler.js';
+import { ValidationError } from '../utils/common/errorHandler.ts';
 
 /**
  * Sanitize request data to prevent XSS attacks

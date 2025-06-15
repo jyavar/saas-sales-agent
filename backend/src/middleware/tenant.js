@@ -4,7 +4,7 @@
 
 import { tenantService } from '../services/tenant.js';
 import { logger } from '../utils/common/logger.js';
-import { ValidationError, UnauthorizedError, ForbiddenError } from '../utils/common/errorHandler.js';
+import { ValidationError, UnauthorizedError, ForbiddenError } from '../utils/common/errorHandler.ts';
 
 /**
  * Extract tenant identifier from various sources

@@ -1,6 +1,6 @@
-import { stripeService } from '../stripe/stripeService';
-import { githubService } from '../github/githubService';
-import { emailService } from '../email/emailService';
+import { stripeService } from '../stripe/stripeService.js';
+import { githubService } from '../github/githubService.js';
+import { emailService } from '../email/emailService.js';
 import { logger } from '../utils/common/logger.js';
 
 export type WebhookProvider = 'stripe' | 'github' | 'resend';

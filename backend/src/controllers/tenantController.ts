@@ -11,13 +11,14 @@ import { validateData } from '../utils/validation.js';
 import { tenantSchemas } from '../models/tenant.js';
 import { userSchemas } from '../models/user.js';
 import { ValidationError, UnauthorizedError, ForbiddenError } from '../utils/common/errorHandler.js';
-import { webhookOrchestrator } from '../webhooks/webhookOrchestrator';
+import { webhookOrchestrator } from '../webhooks/webhookOrchestrator.js';
+import { Request, Response, NextFunction } from 'express';
 
 export class TenantController {
   /**
    * Register new user and create tenant
    */
-  async register(req, res, next) {
+  async register(req: Request, res: Response, next: NextFunction) {
     try {
       const validation = validateData(req.body, userSchemas.register);
       if (!validation.success) {
@@ -60,7 +61,7 @@ export class TenantController {
         userId: userResult.user.id,
         tenantId: tenant.id,
         tenantSlug: tenant.slug,
-        requestId: req.id
+        requestId: req.id ?? ''
       });
 
       res.status(201).json({
@@ -88,7 +89,7 @@ export class TenantController {
   /**
    * Login user
    */
-  async login(req, res, next) {
+  async login(req: Request, res: Response, next: NextFunction) {
     try {
       const validation = validateData(req.body, userSchemas.login);
       if (!validation.success) {
@@ -109,7 +110,7 @@ export class TenantController {
         userId: result.user.id,
         email: result.user.email,
         tenantCount: tenants.length,
-        requestId: req.id
+        requestId: req.id ?? ''
       });
 
       res.json({
@@ -127,13 +128,13 @@ export class TenantController {
   /**
    * Logout user
    */
-  async logout(req, res, next) {
+  async logout(req: Request, res: Response, next: NextFunction) {
     try {
       await authService.signOut(req.session?.access_token);
 
       logger.info('User logged out', {
-        userId: req.user?.id,
-        requestId: req.id
+        userId: req.user!.id,
+        requestId: req.id ?? ''
       });
 
       res.json({
@@ -148,9 +149,9 @@ export class TenantController {
   /**
    * Get user profile
    */
-  async getProfile(req, res, next) {
+  async getProfile(req: Request, res: Response, next: NextFunction) {
     try {
-      const tenants = await tenantService.getUserTenants(req.user.id);
+      const tenants = await tenantService.getUserTenants(req.user!.id);
 
       res.json({
         success: true,
@@ -166,14 +167,14 @@ export class TenantController {
   /**
    * Update user profile
    */
-  async updateProfile(req, res, next) {
+  async updateProfile(req: Request, res: Response, next: NextFunction) {
     try {
       const validation = validateData(req.body, userSchemas.updateProfile);
       if (!validation.success) {
         throw new ValidationError('Invalid profile data', validation.errors);
       }
 
-      const updatedUser = await authService.updateUser(req.user.id, validation.data);
+      const updatedUser = await authService.updateUser(req.user!.id, validation.data);
 
       res.json({
         success: true,
@@ -188,7 +189,7 @@ export class TenantController {
   /**
    * Get current tenant
    */
-  async getCurrentTenant(req, res, next) {
+  async getCurrentTenant(req: Request, res: Response, next: NextFunction) {
     try {
       if (!req.tenant) {
         throw new ValidationError('No tenant context');
@@ -206,14 +207,14 @@ export class TenantController {
   /**
    * Update tenant
    */
-  async updateTenant(req, res, next) {
+  async updateTenant(req: Request, res: Response, next: NextFunction) {
     try {
       const validation = validateData(req.body, tenantSchemas.update);
       if (!validation.success) {
         throw new ValidationError('Invalid tenant data', validation.errors);
       }
 
-      const updatedTenant = await tenantService.updateTenant(req.tenant.id, validation.data);
+      const updatedTenant = await tenantService.updateTenant(req.tenant!.id, validation.data);
 
       res.json({
         success: true,
@@ -228,9 +229,9 @@ export class TenantController {
   /**
    * Get tenant members
    */
-  async getTenantMembers(req, res, next) {
+  async getTenantMembers(req: Request, res: Response, next: NextFunction) {
     try {
-      const members = await tenantService.getTenantMembers(req.tenant.id);
+      const members = await tenantService.getTenantMembers(req.tenant!.id);
 
       res.json({
         success: true,
@@ -244,7 +245,7 @@ export class TenantController {
   /**
    * Invite member to tenant
    */
-  async inviteMember(req, res, next) {
+  async inviteMember(req: Request, res: Response, next: NextFunction) {
     try {
       const validation = validateData(req.body, tenantSchemas.inviteMember);
       if (!validation.success) {
@@ -252,9 +253,9 @@ export class TenantController {
       }
 
       const invitation = await tenantService.inviteMember(
-        req.tenant.id,
+        req.tenant!.id,
         validation.data,
-        req.user.id
+        req.user!.id
       );
 
       res.status(201).json({
@@ -270,7 +271,7 @@ export class TenantController {
   /**
    * Update member role
    */
-  async updateMember(req, res, next) {
+  async updateMember(req: Request, res: Response, next: NextFunction) {
     try {
       const { userId } = req.params;
       const validation = validateData(req.body, tenantSchemas.updateMember);
@@ -279,7 +280,7 @@ export class TenantController {
       }
 
       const updatedMember = await tenantService.updateMember(
-        req.tenant.id,
+        req.tenant!.id,
         userId,
         validation.data
       );
@@ -297,11 +298,11 @@ export class TenantController {
   /**
    * Remove member from tenant
    */
-  async removeMember(req, res, next) {
+  async removeMember(req: Request, res: Response, next: NextFunction) {
     try {
       const { userId } = req.params;
 
-      await tenantService.removeMember(req.tenant.id, userId);
+      await tenantService.removeMember(req.tenant!.id, userId);
 
       res.json({
         success: true,
@@ -315,9 +316,9 @@ export class TenantController {
   /**
    * Get tenant API keys
    */
-  async getApiKeys(req, res, next) {
+  async getApiKeys(req: Request, res: Response, next: NextFunction) {
     try {
-      const apiKeys = await apiKeyService.getTenantApiKeys(req.tenant.id);
+      const apiKeys = await apiKeyService.getTenantApiKeys(req.tenant!.id);
 
       res.json({
         success: true,
@@ -331,7 +332,7 @@ export class TenantController {
   /**
    * Create API key
    */
-  async createApiKey(req, res, next) {
+  async createApiKey(req: Request, res: Response, next: NextFunction) {
     try {
       const validation = validateData(req.body, tenantSchemas.createApiKey);
       if (!validation.success) {
@@ -339,9 +340,9 @@ export class TenantController {
       }
 
       const apiKey = await apiKeyService.createApiKey({
-        tenantId: req.tenant.id,
+        tenantId: req.tenant!.id,
         ...validation.data
-      }, req.user.id);
+      }, req.user!.id);
 
       res.status(201).json({
         success: true,
@@ -356,11 +357,11 @@ export class TenantController {
   /**
    * Revoke API key
    */
-  async revokeApiKey(req, res, next) {
+  async revokeApiKey(req: Request, res: Response, next: NextFunction) {
     try {
       const { keyId } = req.params;
 
-      await apiKeyService.revokeApiKey(keyId, req.tenant.id);
+      await apiKeyService.revokeApiKey(keyId, req.tenant!.id);
 
       res.json({
         success: true,
@@ -374,10 +375,10 @@ export class TenantController {
   /**
    * List all tenants (admin only)
    */
-  async listAllTenants(req, res, next) {
+  async listAllTenants(req: Request, res: Response, next: NextFunction) {
     try {
       // Check if user is admin
-      if (req.user.role !== 'admin') {
+      if (req.user!.role !== 'admin') {
         throw new ForbiddenError('Admin access required');
       }
 
@@ -395,7 +396,7 @@ export class TenantController {
   /**
    * Handle Stripe webhook
    */
-  async handleStripeWebhook(req, res, next) {
+  async handleStripeWebhook(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await webhookOrchestrator.processWebhook('stripe', req);
       res.json({
@@ -411,7 +412,7 @@ export class TenantController {
   /**
    * Handle Resend webhook
    */
-  async handleResendWebhook(req, res, next) {
+  async handleResendWebhook(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await webhookOrchestrator.processWebhook('resend', req);
       res.json({
@@ -427,7 +428,7 @@ export class TenantController {
   /**
    * Handle GitHub webhook
    */
-  async handleGithubWebhook(req, res, next) {
+  async handleGithubWebhook(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await webhookOrchestrator.processWebhook('github', req);
       res.json({

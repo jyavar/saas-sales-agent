@@ -5,7 +5,7 @@
 import crypto from 'crypto';
 import { supabaseAdmin } from './supabase.js';
 import { logger } from '../utils/common/logger.js';
-import { ValidationError, UnauthorizedError } from '../utils/common/errorHandler.js';
+import { ValidationError, UnauthorizedError } from '../utils/common/errorHandler.ts';
 import { githubService } from '../github/githubService';
 
 export class WebhookService {

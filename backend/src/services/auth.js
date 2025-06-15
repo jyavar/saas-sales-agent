@@ -4,7 +4,7 @@
 
 import jwt from 'jsonwebtoken';
 import { logger } from '../utils/common/logger.js';
-import { UnauthorizedError, ValidationError } from '../utils/common/errorHandler.js';
+import { UnauthorizedError, ValidationError } from '../utils/common/errorHandler.ts';
 import {
   createUserWithAuth,
   signInUser,

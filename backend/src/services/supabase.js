@@ -4,7 +4,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { logger } from '../utils/common/logger.js';
-import { DatabaseError } from '../utils/common/errorHandler.js';
+import { DatabaseError } from '../utils/common/errorHandler.ts';
 
 // Validate required environment variables
 const requiredEnvVars = ['SUPABASE_URL', 'SUPABASE_ANON_KEY'];

@@ -3,11 +3,20 @@
  * Main entry point for the backend API with multi-tenant support
  */
 
+import './config/env.js';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import { config } from 'dotenv';
+config();
+console.log('DEBUG ENV:', {
+  SUPABASE_URL: process.env.SUPABASE_URL,
+  SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
+  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  AGENT_SECRET_TOKEN: process.env.AGENT_SECRET_TOKEN,
+});
+import './config/env.js';
 
 // Import middleware
 import { requestIdMiddleware, correlationIdMiddleware } from './utils/common/requestId.js';
@@ -23,9 +32,6 @@ import healthRouter from './routes/health.js';
 import { docsRouter } from './routes/docs.js';
 import agentRoutes from './routes/agentRoutes.js';
 import demoRouter from './routes/demo.js';
-
-// Load environment variables
-config();
 
 // Handle unhandled rejections and exceptions
 handleUnhandledRejection();
@@ -58,7 +64,7 @@ app.use(helmet({
 
 // CORS configuration for multi-tenant support
 const corsOptions = {
-  origin: function (origin, callback) {
+  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
     const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
       'http://localhost:3000',
       'http://localhost:5173',

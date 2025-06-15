@@ -8,12 +8,13 @@ import { validateData } from '../utils/validation.js';
 import { agentActionSchemas } from '../models/agent-action.js';
 import { leadSchemas } from '../models/lead.js';
 import { ValidationError, NotFoundError } from '../utils/common/errorHandler.js';
+import { Request, Response, NextFunction } from 'express';
 
 export class AgentActionController {
   /**
    * Create agent action (CURSOR integration)
    */
-  async createAction(req, res, next) {
+  async createAction(req: Request, res: Response, next: NextFunction) {
     try {
       // Validate action data
       const validation = validateData(req.body, agentActionSchemas.create);
@@ -44,7 +45,7 @@ export class AgentActionController {
 
       // Record the action
       const actionData = {
-        tenant_id: req.tenant.id,
+        tenant_id: req.tenant!.id,
         action_type: actionType,
         agent_id: agentId,
         agent_name: req.body.agentName || agentId,
@@ -60,16 +61,16 @@ export class AgentActionController {
       };
 
       // Add target info if available
-      if (result.lead) {
-        actionData.target_type = 'lead';
-        actionData.target_id = result.lead.id;
+      if ((result as any).lead) {
+        (actionData as any).target_type = 'lead';
+        (actionData as any).target_id = (result as any).lead.id;
       }
 
       // Save action to database
       const { data: action, error } = await supabaseService.insert(
         'agent_actions',
         actionData,
-        req.tenant.id,
+        req.tenant!.id,
         req
       );
 
@@ -80,9 +81,9 @@ export class AgentActionController {
       logger.info('Agent action created', {
         actionType,
         agentId,
-        tenantId: req.tenant.id,
-        tenantSlug: req.tenant.slug,
-        requestId: req.id
+        tenantId: req.tenant!.id,
+        tenantSlug: req.tenant!.slug,
+        requestId: req.id ?? ''
       });
 
       res.status(201).json({
@@ -103,12 +104,12 @@ export class AgentActionController {
   /**
    * List agent actions
    */
-  async listActions(req, res, next) {
+  async listActions(req: Request, res: Response, next: NextFunction) {
     try {
       const { page = 1, limit = 20, status, actionType } = req.query;
       
-      const filters = {
-        tenant_id: req.tenant.id
+      const filters: { [key: string]: any } = {
+        tenant_id: req.tenant!.id
       };
 
       if (status) {
@@ -123,8 +124,8 @@ export class AgentActionController {
         filters,
         sortBy: 'created_at',
         sortOrder: 'desc',
-        limit: parseInt(limit),
-        offset: (parseInt(page) - 1) * parseInt(limit)
+        limit: parseInt(String(limit)),
+        offset: (parseInt(String(page)) - 1) * parseInt(String(limit))
       }, req);
 
       res.json({
@@ -132,8 +133,8 @@ export class AgentActionController {
         data: {
           actions: result.data,
           pagination: {
-            page: parseInt(page),
-            limit: parseInt(limit),
+            page: parseInt(String(page)),
+            limit: parseInt(String(limit)),
             total: result.count || result.data.length
           }
         }
@@ -146,14 +147,14 @@ export class AgentActionController {
   /**
    * Get agent action by ID
    */
-  async getAction(req, res, next) {
+  async getAction(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
 
       const result = await supabaseService.query('agent_actions', {
         filters: {
           id,
-          tenant_id: req.tenant.id
+          tenant_id: req.tenant!.id
         }
       }, req);
 
@@ -173,7 +174,7 @@ export class AgentActionController {
   /**
    * Update agent action
    */
-  async updateAction(req, res, next) {
+  async updateAction(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
 
@@ -189,7 +190,7 @@ export class AgentActionController {
           ...validation.data,
           updated_at: new Date().toISOString()
         },
-        req.tenant.id,
+        req.tenant!.id,
         req
       );
 
@@ -210,16 +211,16 @@ export class AgentActionController {
   /**
    * Get agent action statistics
    */
-  async getStats(req, res, next) {
+  async getStats(req: Request, res: Response, next: NextFunction) {
     try {
       // Get counts by status
-      const statusCounts = {};
+      const statusCounts: { [key: string]: any } = {};
       const statuses = ['pending', 'processing', 'completed', 'failed', 'cancelled'];
 
       for (const status of statuses) {
         const result = await supabaseService.query('agent_actions', {
           filters: {
-            tenant_id: req.tenant.id,
+            tenant_id: req.tenant!.id,
             status
           }
         }, req);
@@ -228,13 +229,13 @@ export class AgentActionController {
       }
 
       // Get counts by action type
-      const actionTypes = ['create_lead', 'update_lead', 'analyze_company', 'health_check'];
-      const typeCounts = {};
+      const actionTypes: { [key: string]: any } = {};
+      const typeCounts: { [key: string]: any } = {};
 
-      for (const actionType of actionTypes) {
+      for (const actionType of ['create_lead', 'update_lead', 'analyze_company', 'health_check']) {
         const result = await supabaseService.query('agent_actions', {
           filters: {
-            tenant_id: req.tenant.id,
+            tenant_id: req.tenant!.id,
             action_type: actionType
           }
         }, req);
@@ -245,7 +246,7 @@ export class AgentActionController {
       // Get recent actions
       const recentActions = await supabaseService.query('agent_actions', {
         filters: {
-          tenant_id: req.tenant.id
+          tenant_id: req.tenant!.id
         },
         sortBy: 'created_at',
         sortOrder: 'desc',
@@ -257,7 +258,7 @@ export class AgentActionController {
         stats: {
           statusCounts,
           typeCounts,
-          total: Object.values(statusCounts).reduce((sum, count) => sum + count, 0),
+          total: Object.values(statusCounts).reduce((sum: number, count: number) => sum + (count as number), 0),
           recentActions: recentActions.data
         }
       });
@@ -269,7 +270,7 @@ export class AgentActionController {
   /**
    * Process create lead action
    */
-  async processCreateLead(payload, req) {
+  async processCreateLead(payload: any, req: Request) {
     try {
       const { leadData } = payload;
 
@@ -281,7 +282,7 @@ export class AgentActionController {
 
       // Format lead data for database
       const formattedLead = {
-        tenant_id: req.tenant.id,
+        tenant_id: req.tenant!.id,
         email: leadData.email,
         first_name: leadData.firstName,
         last_name: leadData.lastName,
@@ -317,23 +318,23 @@ export class AgentActionController {
         .from('lead_interactions')
         .insert({
           lead_id: lead.id,
-          agent_id: req.agent.id,
+          agent_id: req.agent!.id,
           interaction_type: 'qualification',
-          summary: `Lead created by ${req.agent.id}`,
+          summary: `Lead created by ${req.agent!.id}`,
           confidence: 0.95,
           metadata: {
             source: 'cursor_agent',
-            requestId: req.id
+            requestId: req.id ?? ''
           }
         });
 
       logger.info('Lead created by agent', {
         leadId: lead.id,
         email: lead.email,
-        agentId: req.agent.id,
-        tenantId: req.tenant.id,
-        tenantSlug: req.tenant.slug,
-        requestId: req.id
+        agentId: req.agent!.id,
+        tenantId: req.tenant!.id,
+        tenantSlug: req.tenant!.slug,
+        requestId: req.id ?? ''
       });
 
       return {
@@ -349,10 +350,10 @@ export class AgentActionController {
       };
     } catch (error) {
       logger.error('Error creating lead', {
-        error: error.message,
-        tenantId: req.tenant.id,
-        agentId: req.agent.id,
-        requestId: req.id
+        error: (error as any).message,
+        tenantId: req.tenant!.id,
+        agentId: req.agent!.id,
+        requestId: req.id ?? ''
       });
       throw error;
     }
@@ -361,7 +362,7 @@ export class AgentActionController {
   /**
    * Process update lead action
    */
-  async processUpdateLead(payload, req) {
+  async processUpdateLead(payload: any, req: Request) {
     try {
       const { leadId, updates } = payload;
 
@@ -376,7 +377,7 @@ export class AgentActionController {
       }
 
       // Format updates
-      const formattedUpdates = {
+      const formattedUpdates: { [key: string]: any } = {
         first_name: updates.firstName,
         last_name: updates.lastName,
         company: updates.company,
@@ -407,7 +408,7 @@ export class AgentActionController {
         .from('leads')
         .update(formattedUpdates)
         .eq('id', leadId)
-        .eq('tenant_id', req.tenant.id)
+        .eq('tenant_id', req.tenant!.id)
         .select()
         .single();
 
@@ -420,23 +421,23 @@ export class AgentActionController {
         .from('lead_interactions')
         .insert({
           lead_id: lead.id,
-          agent_id: req.agent.id,
+          agent_id: req.agent!.id,
           interaction_type: 'qualification',
-          summary: `Lead updated by ${req.agent.id}`,
+          summary: `Lead updated by ${req.agent!.id}`,
           confidence: 0.9,
           metadata: {
             updates: Object.keys(formattedUpdates),
             source: 'cursor_agent',
-            requestId: req.id
+            requestId: req.id ?? ''
           }
         });
 
       logger.info('Lead updated by agent', {
         leadId: lead.id,
-        agentId: req.agent.id,
-        tenantId: req.tenant.id,
+        agentId: req.agent!.id,
+        tenantId: req.tenant!.id,
         updates: Object.keys(formattedUpdates),
-        requestId: req.id
+        requestId: req.id ?? ''
       });
 
       return {
@@ -452,10 +453,10 @@ export class AgentActionController {
       };
     } catch (error) {
       logger.error('Error updating lead', {
-        error: error.message,
-        tenantId: req.tenant.id,
-        agentId: req.agent.id,
-        requestId: req.id
+        error: (error as any).message,
+        tenantId: req.tenant!.id,
+        agentId: req.agent!.id,
+        requestId: req.id ?? ''
       });
       throw error;
     }
@@ -464,7 +465,7 @@ export class AgentActionController {
   /**
    * Process analyze company action
    */
-  async processAnalyzeCompany(payload, req) {
+  async processAnalyzeCompany(payload: any, req: Request) {
     try {
       const { analysisData } = payload;
 
@@ -499,9 +500,9 @@ export class AgentActionController {
 
       logger.info('Company analyzed by agent', {
         companyName: analysisData.companyName,
-        agentId: req.agent.id,
-        tenantId: req.tenant.id,
-        requestId: req.id
+        agentId: req.agent!.id,
+        tenantId: req.tenant!.id,
+        requestId: req.id ?? ''
       });
 
       return {
@@ -510,10 +511,10 @@ export class AgentActionController {
       };
     } catch (error) {
       logger.error('Error analyzing company', {
-        error: error.message,
-        tenantId: req.tenant.id,
-        agentId: req.agent.id,
-        requestId: req.id
+        error: (error as any).message,
+        tenantId: req.tenant!.id,
+        agentId: req.agent!.id,
+        requestId: req.id ?? ''
       });
       throw error;
     }
@@ -522,29 +523,29 @@ export class AgentActionController {
   /**
    * Process health check action
    */
-  async processHealthCheck(payload, req) {
+  async processHealthCheck(payload: any, req: Request) {
     try {
       // Get tenant stats
       const leadCount = await supabaseService.query('leads', {
-        tenantId: req.tenant.id
+        tenantId: req.tenant!.id
       }, req);
 
       const actionCount = await supabaseService.query('agent_actions', {
-        tenantId: req.tenant.id
+        tenantId: req.tenant!.id
       }, req);
 
       const health = {
         status: 'healthy',
         timestamp: new Date().toISOString(),
         tenant: {
-          id: req.tenant.id,
-          slug: req.tenant.slug,
-          plan: req.tenant.plan,
-          isActive: req.tenant.isActive
+          id: req.tenant!.id,
+          slug: req.tenant!.slug,
+          plan: req.tenant!.plan,
+          isActive: req.tenant!.isActive
         },
         agent: {
-          id: req.agent.id,
-          type: req.agent.type
+          id: req.agent!.id,
+          type: req.agent!.type
         },
         stats: {
           leadCount: leadCount.count || 0,
@@ -558,9 +559,9 @@ export class AgentActionController {
       };
 
       logger.info('Health check by agent', {
-        agentId: req.agent.id,
-        tenantId: req.tenant.id,
-        requestId: req.id
+        agentId: req.agent!.id,
+        tenantId: req.tenant!.id,
+        requestId: req.id ?? ''
       });
 
       return {
@@ -569,10 +570,10 @@ export class AgentActionController {
       };
     } catch (error) {
       logger.error('Error in health check', {
-        error: error.message,
-        tenantId: req.tenant.id,
-        agentId: req.agent.id,
-        requestId: req.id
+        error: (error as any).message,
+        tenantId: req.tenant!.id,
+        agentId: req.agent!.id,
+        requestId: req.id ?? ''
       });
       throw error;
     }
@@ -581,7 +582,7 @@ export class AgentActionController {
   /**
    * Calculate priority score
    */
-  calculatePriorityScore(priority) {
+  calculatePriorityScore(priority: string) {
     const scores = {
       low: 1,
       normal: 2,
@@ -589,7 +590,7 @@ export class AgentActionController {
       urgent: 4
     };
 
-    return scores[priority] || 2;
+    return scores[priority as keyof typeof scores] || 2;
   }
 }
 

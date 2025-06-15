@@ -1,6 +1,6 @@
 import Stripe from 'stripe';
 import type { Buffer } from 'node:buffer';
-import { STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET } from '../config/stripeConfig';
+import { STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET } from '../config/stripeConfig.js';
 
 /**
  * StripeService centraliza toda la lógica de integración con Stripe.
@@ -30,7 +30,7 @@ export class StripeService {
   private webhookSecret: string;
 
   constructor(apiKey: string, webhookSecret: string) {
-    this.stripe = new Stripe(apiKey, { apiVersion: '2023-08-16' });
+    this.stripe = new Stripe(apiKey, { apiVersion: '2023-10-16' });
     this.webhookSecret = webhookSecret;
   }
 
@@ -118,7 +118,7 @@ export class StripeService {
    */
   public async cancelSubscription(subscriptionId: string): Promise<Stripe.Subscription> {
     try {
-      return await this.stripe.subscriptions.del(subscriptionId);
+      return await (this.stripe.subscriptions as any).del(subscriptionId);
     } catch (err) {
       console.error('[Stripe] Failed to cancel subscription:', err);
       throw err;

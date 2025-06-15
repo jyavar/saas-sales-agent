@@ -143,13 +143,18 @@ export class GithubService {
       const [owner, repo] = repoFullName.split('/');
       // Leer README.md
       const readmeResp = await this.octokit.repos.getReadme({ owner, repo });
-      const readmeContent = Buffer.from(readmeResp.data.content, readmeResp.data.encoding).toString('utf-8');
+      let readmeContent = '';
+      if (readmeResp.data && readmeResp.data.type === 'file' && typeof readmeResp.data.content === 'string' && typeof readmeResp.data.encoding === 'string') {
+        readmeContent = Buffer.from(readmeResp.data.content, readmeResp.data.encoding as BufferEncoding).toString('utf-8');
+      }
       // Leer package.json
       let packageJsonContent = null;
       try {
         const pkgResp = await this.octokit.repos.getContent({ owner, repo, path: 'package.json' });
         if (Array.isArray(pkgResp.data)) throw new Error('package.json is a directory');
-        packageJsonContent = Buffer.from(pkgResp.data.content, pkgResp.data.encoding).toString('utf-8');
+        if (pkgResp.data && pkgResp.data.type === 'file' && typeof pkgResp.data.content === 'string' && typeof pkgResp.data.encoding === 'string') {
+          packageJsonContent = Buffer.from(pkgResp.data.content, pkgResp.data.encoding as BufferEncoding).toString('utf-8');
+        }
       } catch (err) {
         console.warn('[GitHub] package.json not found', { repoFullName });
       }

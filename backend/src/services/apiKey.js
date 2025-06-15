@@ -5,7 +5,7 @@
 import { supabaseAdmin } from './supabase.js';
 import { authService } from './auth.js';
 import { logger } from '../utils/common/logger.js';
-import { DatabaseError, ValidationError, NotFoundError } from '/backend/src/utils/common/errorHandler.js';
+import { DatabaseError, ValidationError, NotFoundError } from '../utils/common/errorHandler.ts';
 
 export class ApiKeyService {
   /**

@@ -4,7 +4,7 @@
 
 import { supabaseAdmin } from './supabase.js';
 import { logger } from '../utils/common/logger.js';
-import { DatabaseError, ValidationError } from '../utils/common/errorHandler.js';
+import { DatabaseError, ValidationError } from '../utils/common/errorHandler.ts';
 
 export class TenantService {
   /**
